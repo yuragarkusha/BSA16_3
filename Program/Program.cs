@@ -200,7 +200,7 @@ namespace Program
             {
                 Address = "Yangekya str. 92",
                 BirthDate = new DateTime(1994,3,22),
-                City = "kiev",
+                City = "Kiev",
                 Email = "omimi@gmail.com",
                 FirstName = "Serhiy",
                 LastName = "Lizniy",
