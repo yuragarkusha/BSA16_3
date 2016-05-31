@@ -22,7 +22,6 @@ namespace AddressBook
         private readonly List<User> _userList;
         private readonly List<User> _users = new List<User>();
 
-
         public AddressBook()
         {
             _userList = new List<User>();
@@ -115,6 +114,12 @@ namespace AddressBook
         public IEnumerable<User> PagingUsers(Func<User, bool> predicate, int first, int last)
         {
             return _users.Where(predicate).Skip(first).Take(last);
+        }
+        public IEnumerable<User> PeopleWhoHaveBirthdayToday()
+        {
+            return
+                _users.Where(
+                    user => user.BirthDate.Month == DateTime.Now.Month && user.BirthDate.Day == DateTime.Now.Day);
         }
 
         public event EventHandler<AddressBookEventArgs> UserAdded;

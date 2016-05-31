@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Timers;
 using AddressBook;
 using Logger;
 using static Logger.Logger;
+using Logger = Logger.Logger;
 
 namespace Program
 {
@@ -27,6 +33,8 @@ namespace Program
 
             return user;
         }
+
+        private static IEnumerable<User> _usersWhoHaveBirthdayToday; 
 
         private static void TestAddressBook(AddressBook.AddressBook addressBook)
         {
@@ -97,6 +105,10 @@ namespace Program
                 logger.Info(string.Join(", ", addressBook.BirthdayTodayUsersCount("Kiev")) + ": users who live in Kiev and have birthday today");
                 logger.Info(string.Join(", ", addressBook.PagingUsers(u => !string.IsNullOrEmpty(u.FirstName), 1, 3)) + ": paging");
 
+
+                _usersWhoHaveBirthdayToday =  addressBook.PeopleWhoHaveBirthdayToday();
+
+
                 Console.WriteLine();
                 Console.WriteLine("Press key...");
                 Console.ReadKey();
@@ -119,7 +131,7 @@ namespace Program
             }
         }
 
-        public static void AddUsers(AddressBook.AddressBook addressBook,Logger.Logger logger)
+        public static void AddUsers(AddressBook.AddressBook addressBook,global::Logger.Logger logger)
         {
             foreach (var user in UsersArray)
             {
@@ -134,6 +146,53 @@ namespace Program
             }
         }
 
+        public static void AddTimer(AddressBook.AddressBook addressBook)
+        {
+            var notifier = new Timer();
+            notifier.Elapsed += SendBirthdayCongrats;
+            notifier.Interval = 86400000;
+            notifier.Enabled = true;
+        }
+
+        private static void SendBirthdayCongrats(object sender, ElapsedEventArgs e)
+        {
+            if (!_usersWhoHaveBirthdayToday.Any()) return;
+            var fromAddress = new MailAddress("17223377888as@gmail.com", "From");
+            var emails = _usersWhoHaveBirthdayToday.Select(x => x.Email);
+            const string fromPassword = "********";
+            const string subject = "Subject";
+            const string body = "Body";
+
+            var smtp = new SmtpClient
+            {
+                Host = "smtp.gmail.com",
+                Port = 587,
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(fromAddress.Address, fromPassword),
+                Timeout = 2000
+            };
+            foreach (var email in emails)
+            {
+                using (var message = new MailMessage(fromAddress, new MailAddress(email))
+                {
+                    Subject = subject,
+                    Body = body
+                })
+                {
+                    try
+                    {
+                        smtp.Send(message);
+                        message.Dispose();
+                    }
+                    catch (Exception)
+                    {
+                        // ignored
+                    }
+                }
+            }
+        }
 
         private static readonly User[] UsersArray =
         {
