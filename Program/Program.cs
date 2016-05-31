@@ -14,7 +14,7 @@ namespace Program
 
             if (string.IsNullOrEmpty(userId))
             {
-                GetLogger().Warning("This user doesn't exist");
+                GetLogger().Warning("This user is don't exist");
             }
 
             var user = new User(userId);
@@ -76,7 +76,6 @@ namespace Program
         static void Main(string[] args)
         {
             var logger = GetLogger();
-
             using (var strategy = new LoggerFile("loggerFile.txt", false))
             {
                 logger.ChangeStrategy(strategy);
@@ -84,7 +83,25 @@ namespace Program
                 var addressBook = new AddressBook.AddressBook();
                 addressBook.UserAdded += HandleBookChanged;
                 addressBook.UserRemoved += HandleBookChanged;
-                TestAddressBook(addressBook);
+
+                AddUsers(addressBook,logger);
+
+                logger.Info(string.Join(", ", addressBook.GmailUsers()) + ": users who have gmail.com domain");
+                logger.Info(string.Join(", ", UsersArray.Over18YearsUsersFromKiev()) + ": over 18 years users from Kiev");
+                logger.Info(string.Join(", ", addressBook.RecentlyAddedFemale()) + ": female users who was added last 10 days");
+                logger.Info(string.Join(", ", addressBook.BornInJanuary()) + ": users who born in January and who has address and phone number");
+                foreach (var users in addressBook.UsersGenderDictionary())
+                {
+                    logger.Info($"{users.Key}(s) : " + string.Join(", ", users.Value));
+                }
+                logger.Info(string.Join(", ", addressBook.BirthdayTodayUsersCount("Kiev")) + ": users who live in Kiev and have birthday today");
+                logger.Info(string.Join(", ", addressBook.PagingUsers(u => !string.IsNullOrEmpty(u.FirstName), 1, 3)) + ": paging");
+
+                Console.WriteLine();
+                Console.WriteLine("Press key...");
+                Console.ReadKey();
+
+                //TestAddressBook(addressBook);
                 logger.Info("Logger finish work");
             }
         }
@@ -101,5 +118,61 @@ namespace Program
                 logger.Debug(args.Message);
             }
         }
+
+        public static void AddUsers(AddressBook.AddressBook addressBook,Logger.Logger logger)
+        {
+            foreach (var user in UsersArray)
+            {
+                try
+                {
+                    addressBook.AddUser(user);
+                }
+                catch (ArgumentException ex)
+                {
+                    logger.Error(ex.ToString());
+                }
+            }
+        }
+
+
+        private static readonly User[] UsersArray =
+        {
+            new User
+            {
+                Address = "Yangekya str. 92",
+                BirthDate = new DateTime(1994,3,22),
+                City = "kiev",
+                Email = "omimi@gmail.com",
+                FirstName = "Serhiy",
+                LastName = "Lizniy",
+                Gender = User.GenderEnum.Male,
+                PhoneNumber = "+380945443344",
+                TimeAdded = DateTimeOffset.Now
+            },
+            new User
+            {
+                Address = "Lenina str.20",
+                BirthDate = new DateTime(1964,1,14),
+                City = "Moscow",
+                Email = "oli@outlook.com",
+                FirstName = "Olya",
+                LastName = "Rumich",
+                Gender = User.GenderEnum.Female,
+                PhoneNumber = "+320334448797",
+                TimeAdded = DateTimeOffset.Now.AddDays(-1)
+            },
+            new User
+            {
+                Address = "Muzeyna str. 67",
+                BirthDate = new DateTime(1998,5,31),
+                City = "Vinnitsya",
+                Email = "mollin@gmail.com",
+                FirstName = "Mihaiil",
+                LastName = "Odintsov",
+                Gender = User.GenderEnum.Male,
+                PhoneNumber = "+380988773248",
+                TimeAdded = DateTimeOffset.Now
+            }
+        };
     }
 }

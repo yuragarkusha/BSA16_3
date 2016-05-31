@@ -19,7 +19,9 @@ namespace AddressBook
     }
     public class AddressBook
     {
-        private List<User> _userList;
+        private readonly List<User> _userList;
+        private readonly List<User> _users = new List<User>();
+
 
         public AddressBook()
         {
@@ -74,6 +76,45 @@ namespace AddressBook
         {
             RemoveUser(user.Id);
             return true;
+        }
+
+        public IEnumerable<User> GmailUsers()
+        {
+            return _users.Where(u => u.Email.EndsWith("@gmail.com"));
+        }
+
+        public IEnumerable<User> RecentlyAddedFemale()
+        {
+            return from user in _users where 
+                   (user.Gender == User.GenderEnum.Female &&
+                   user.TimeAdded > DateTimeOffset.Now.AddDays(-10))
+                   select user;
+        }
+
+        public IEnumerable<User> BornInJanuary()
+        {
+            return _users.Where(u => u.BirthDate.Month == 1 &&
+                                    !string.IsNullOrEmpty(u.Address) &&
+                                    !string.IsNullOrEmpty(u.PhoneNumber))
+                        .OrderByDescending(u => u.LastName);
+        }
+
+        public IDictionary<string, List<User>> UsersGenderDictionary()
+        {
+            return _users.GroupBy(u => u.Gender).ToDictionary(u => u.Key.ToString().ToLower(), u => u.ToList());
+        }
+
+        public int BirthdayTodayUsersCount(string city)
+        { 
+                return (from user in _users where user.City == city &&
+                        user.BirthDate.Month == DateTime.Today.Month &&
+                        user.BirthDate.Day == DateTime.Today.Day select
+                        user).Count();
+        }
+
+        public IEnumerable<User> PagingUsers(Func<User, bool> predicate, int first, int last)
+        {
+            return _users.Where(predicate).Skip(first).Take(last);
         }
 
         public event EventHandler<AddressBookEventArgs> UserAdded;
